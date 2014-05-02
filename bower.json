@@ -1,0 +1,27 @@
+{
+  "name": "simple-upload-server",
+  "main": "index.js",
+  "version": "0.0.1",
+  "authors": [
+    "Quangbuu Le <quangbuule@gmail.com>"
+  ],
+  "description": "Simple upload server for testing",
+  "keywords": [
+    "simple",
+    "upload",
+    "testing",
+    "server"
+  ],
+  "license": "MIT",
+  "homepage": "http://lozi.vn",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "FileAPI": "~2.0.3"
+  }
+}
