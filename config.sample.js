@@ -5,4 +5,4 @@ var config = {
     returnUrl: '/upload/tmp/%s'
 }
 
-exports = config;
+module.exports = exports = config;
