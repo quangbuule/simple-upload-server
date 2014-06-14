@@ -1,9 +1,9 @@
 Simple Upload Server
 ====================
 
-Using node.js
+Using node.js (and GraphicsMagick for autoOrient images)
 
-Thing to do
+Things to do
 -----------
 ```sh
 git clone [git repo] simple-upload-server

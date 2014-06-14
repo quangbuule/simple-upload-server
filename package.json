@@ -3,6 +3,8 @@
   "description": "Simple upload server for testing",
   "version": "0.0.1",
   "dependencies": {
-    "express": "~3.x"
+    "express": "~3.x",
+    "gm": "^1.16.0",
+    "async": "^0.9.0"
   }
 }

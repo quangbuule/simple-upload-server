@@ -1,8 +1,10 @@
 var express = require('express'),
     app = express(),
+    async = require('async'),
     path = require('path'),
     fs = require('fs'),
-    config = require('./config');
+    config = require('./config'),
+    gm = require('gm');
 
 app.use(express.bodyParser());
 app.use('/upload', express.static(path.join(__dirname, '/upload')));
@@ -25,39 +27,52 @@ app.options(config.uploadRoute, function (req, res) {
     res.send(200);
 });
 
-function _copyUploadedFile (file) {
+function _processUploadedFile (file, callback) {
     var extName = path.extname(file.name).toLowerCase(),
         newName = Date.now(),
-        newFilename = newName + extName;
+        newFilename = newName + extName,
+        newFilepath = path.join(config.uploadPath, newFilename);
 
-    var fileContent = fs.readFileSync(file.path);
-    fs.writeFileSync(path.join(config.uploadPath, newFilename), fileContent);
+    gm(file.path)
+        .autoOrient()
+        .write(newFilepath, function (err) {
+            if (err) {
+                var fileContent = fs.readFileSync(file.path);
+                fs.writeFileSync(newFilepath, fileContent);
+            }
 
-    return config.returnUrl.replace('%s', newFilename);
+            callback(null, config.returnUrl.replace('%s', newFilename));
+        });
 };
 
 app.post(config.uploadRoute, function (req, res) {
     _allowOrigiṇ̣(req, res);
 
-    var ret = [];
+    var ret = [],
+
+        callback = function () {
+            res.json(200, {
+                message: 'Uploaded Successfully!',
+                urls: ret
+            });
+        },
+
+        files;
 
     if (req.files && req.files.files && Array.isArray(req.files.files)) {
-        ret = req.files.files.map(function (file) {
-            return _copyUploadedFile(file);
-        });
+        files = req.files.files;
 
     } else if (req.files) {
-        for (var k in req.files) {
-            ret.push(_copyUploadedFile(file));
-        }
+        files = req.files;
     }
 
-
-    res.json(200, {
-        message: 'Uploaded Successfully!',
-        urls: ret
+    async.map(files, function (file, callback) {
+        _processUploadedFile(file, callback);
+    }, function (err, urls) {
+        ret = urls;
+        callback(err);
     });
-})
+});
 
 console.log('Simple Upload Server started at port ' + config.port);
 console.log('Please upload file(s) via route: 0.0.0.0:' + config.port +
