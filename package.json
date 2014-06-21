@@ -5,6 +5,7 @@
   "dependencies": {
     "express": "~3.x",
     "gm": "^1.16.0",
-    "async": "^0.9.0"
+    "async": "^0.9.0",
+    "request": "^2.36.0"
   }
 }
