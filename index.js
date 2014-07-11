@@ -35,7 +35,7 @@ function _processUploadedFile (file, callback) {
         newFilepath = path.join(config.uploadPath, newFilename);
 
     gm(file.path)
-        .autoOrient()
+        /* .autoOrient() */
         .write(newFilepath, function (err) {
             if (err) {
                 var fileContent = fs.readFileSync(file.path);
