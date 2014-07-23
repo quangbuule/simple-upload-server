@@ -51,20 +51,26 @@ app.post(config.uploadRoute, function (req, res) {
 
     var ret = [],
 
-        callback = function () {
+        callback = function (err) {
+            if (err) {
+                console.error(err.stack);
+            }
+
             res.json(200, {
                 message: 'Uploaded successfully',
                 urls: ret
             });
         },
 
-        files;
+        files = [];
 
     if (req.files && req.files.files && Array.isArray(req.files.files)) {
         files = req.files.files;
 
     } else if (req.files) {
-        files = req.files;
+        for (var i in req.files) {
+            files.push(req.files[i]);
+        }
     }
 
     async.map(files, function (file, callback) {
@@ -94,7 +100,6 @@ app.get(config.getRoute, function (req, res) {
         },
         filename = (Math.random().toString(36) + '00000000000000000').slice(2, 18) + '.jpg',
         filepath = path.join(config.uploadPath, filename);
-
         r = request({
                 url: url,
                 headers: headers
