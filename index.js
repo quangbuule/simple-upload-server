@@ -12,7 +12,7 @@ app.use('/upload', express.static(path.join(__dirname, '/upload')));
 
 app.get('/', function(req, res){
     res.set('Access-Control-Allow-Origin', '*');
-    res.send('<h1>Simple Upload Server</h1><p>Created by quangbuule.</p>' +
+    res.send('<h1>Simple Upload Server</h1><p>Created by quangbuule. Last update: 4:57 PM 7/24/2014</p>' +
             '<p>Please upload file(s) via route: ' + req.get('host') +
             config.uploadRoute + '</p>');
 });
