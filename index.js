@@ -28,28 +28,85 @@ app.options(config.uploadRoute, function (req, res) {
     res.send(200);
 });
 
-function _processUploadedFile (file, callback) {
-    var extName = path.extname(file.name).toLowerCase(),
-        newName = Date.now(),
-        newFilename = newName + extName,
-        newFilepath = path.join(config.uploadPath, newFilename);
+function _copyFile(source, dest) {
+    var fileContent = fs.readFileSync(source);
+    fs.writeFileSync(dest, fileContent);
+};
 
-    gm(file.path)
-        /* .autoOrient() */
-        .write(newFilepath, function (err) {
-            if (err) {
-                var fileContent = fs.readFileSync(file.path);
-                fs.writeFileSync(newFilepath, fileContent);
+function _processUploadedFile (file, opts, callback) {
+    var extName = path.extname(file.name).toLowerCase(),
+        newFilename = (Math.random().toString(36) + '00000000000000000').slice(2, 18) + extName,
+        newFilepath = path.join(config.uploadPath, newFilename),
+        thumbFilename = (Math.random().toString(36) + '00000000000000000').slice(2, 18) + extName,
+        thumbFilepath = path.join(config.uploadPath, thumbFilename);
+
+    async.waterfall([
+        function (callback) {
+            var gmQuery = gm(file.path)
+                .write(newFilepath, function (err) {
+                    if (err) {
+                        _copyFile(file.path, newFilepath);
+                    }
+
+                    callback(null);
+                });
+        },
+
+        function (callback) {
+            if (!opts.w) {
+                return callback();
             }
 
-            callback(null, config.returnUrl.replace('%s', newFilename));
-        });
+            var maxWidth = Number(opts.w) || 100,
+                _fallback = function (err) {
+                    _copyFile(file.path, thumbFilepath);
+                    return callback();
+                };
+
+            gm(file.path)
+                .autoOrient()
+                .stream(function (err, stdout, stderr) {
+                    if (err) {
+                        return _fallback(err);
+                    }
+
+                    gm(stdout)
+                        .size(function (err, size) {
+                            if (err || size.width <= maxWidth) {
+                                return _fallback();
+                            }
+
+                            gm(file.path)
+                            .autoOrient()
+                            .resize(maxWidth, size.height * maxWidth/size.width)
+                                .write(thumbFilepath, function (err) {
+                                    return err ? fallback() : callback();
+                                });
+                        });
+                })
+        },
+
+        function () {
+            var ret = {
+                url: config.returnUrl.replace('%s', newFilename),
+                thumb: config.returnUrl.replace('%s', thumbFilename)
+            };
+
+            if (!opts.w) {
+                delete ret.thumb;
+            }
+
+            callback(null, ret);
+        }
+    ]);
 };
 
 app.post(config.uploadRoute, function (req, res) {
     _allowOrigiṇ̣(req, res);
 
-    var ret = [],
+    var urls = [],
+        thumbs = [],
+        opts = req.query;
 
         callback = function (err) {
             if (err) {
@@ -58,7 +115,8 @@ app.post(config.uploadRoute, function (req, res) {
 
             res.json(200, {
                 message: 'Uploaded successfully',
-                urls: ret
+                urls: urls,
+                thumbs: thumbs
             });
         },
 
@@ -74,9 +132,10 @@ app.post(config.uploadRoute, function (req, res) {
     }
 
     async.map(files, function (file, callback) {
-        _processUploadedFile(file, callback);
-    }, function (err, urls) {
-        ret = urls;
+        _processUploadedFile(file, opts, callback);
+    }, function (err, rets) {
+        urls = rets.map(function (ret) { return ret.url });
+        thumbs = rets.map(function (ret) { return ret.thumb });
         callback(err);
     });
 });
